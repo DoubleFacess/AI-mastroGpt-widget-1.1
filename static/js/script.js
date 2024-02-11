@@ -1,101 +1,164 @@
-// ========================== greet user proactively ========================
-$(document).ready(function () {
+/* @@ constants @@ */
 
-	// showBotTyping();
-	// $("#userInput").prop('disabled', true);
-	//global variables
-	action_name = "action_greet_user";
-	user_id = "jitesh97";
+const DIV_PROFILE = document.querySelector(".profile_div")
+const DIV_WIDGET = document.querySelector(".widget")
+const ID_PROFILE = document.getElementById("profile_div")
+const BTN_CLOSE = document.getElementById('close')
+//====================================== Toggle chatbot ======================================= 
+var profileDiv = ID_PROFILE
+var profileDivElement = DIV_PROFILE
+var widgetElement = DIV_WIDGET
 
-	//if you want the bot to start the conversation
-	// action_trigger();
-	
-})
+profileDiv.addEventListener("click", function () {
+	profileDivElement.classList.toggle("hide");
+	widgetElement.setAttribute('style', 'display: block')
+	widgetElement.classList.toggle();
+});
 
-// ========================== restart conversation ========================
-function restartConversation() {
-	$(".usrInput").val("");
-	send("/restart");
+//====================================== Toggle chatbot with close button ===================== 
+// When the #close element is clicked
+var closeButton = BTN_CLOSE
+if (closeButton) {
+    closeButton.addEventListener('click', function() {
+        var profileDiv = DIV_PROFILE
+        var widgetDiv = DIV_WIDGET
+        if (profileDiv && profileDiv.classList.contains("hide")) {
+			//profileDiv.style.display = profileDiv.style.display === 'none' ? 'block' : 'none';
+			profileDiv.classList.remove("hide")
+        }
+        if (widgetDiv) {
+            widgetDiv.style.display = widgetDiv.style.display === 'none' ? 'block' : 'none';
+        }
+        scrollToBottomOfResults();
+    });
 }
 
+
 // ========================== let the bot start the conversation ========================
-function action_trigger() {
+
+function action_trigger(user_id, action_name) {
 	// send an event to the bot, so that bot can start the conversation by greeting the user
-	$.ajax({
-		url: `http://localhost:5005/conversations/${user_id}/execute`,
-		type: "POST",
-		contentType: "application/json",
-		data: JSON.stringify({ "name": action_name, "policy": "MappingPolicy", "confidence": "0.98" }),
-		success: function (botResponse, status) {
-			console.log("Response from Rasa: ", botResponse, "\nStatus: ", status);
+	const url = `http://localhost:5005/conversations/${user_id}/execute`;
+	const data = JSON.stringify({ name: action_name, policy: "MappingPolicy", confidence: "0.98" });
+	const headers = {
+		"Content-Type": "application/json"
+	};
+
+	fetch(url, {
+		method: "POST",
+		headers,
+		body: data
+	})
+		.then(response => response.json())
+		.then(botResponse => {
+			console.log("Response from Rasa: ", botResponse, "\nStatus: ", response.status);
 
 			if (botResponse.hasOwnProperty("messages")) {
 				setBotResponse(botResponse.messages);
 			}
-			$("#userInput").prop('disabled', false);
-		},
-		error: function (xhr, textStatus, errorThrown) {
-
-			// if there is no response from rasa server
+			document.getElementById("userInput").disabled = false;
+		})
+		.catch(error => {
+			console.log("Error from bot end: ", error);
 			setBotResponse("");
-			console.log("Error from bot end: ", textStatus);
-			$("#userInput").prop('disabled', false);
-		}
-	});
+			document.getElementById("userInput").disabled = false;
+		});
 }
 
 
-//=====================================	user enter or sends the message =====================
-$(".usrInput").on("keyup keypress", function (e) {
-	var keyCode = e.keyCode || e.which;
+// ========================== greet user proactively ========================
 
-	var text = $(".usrInput").val();
+document.addEventListener('DOMContentLoaded', function () {
+	showBotTyping();
+	document.getElementById('userInput').disabled = false;
+
+	// global variables
+	const action_name = "action_greet_user";
+	const user_id = "jitesh97";
+
+	// if you want the bot to start the conversation
+	action_trigger(user_id, action_name)
+});
+
+// ========================== restart conversation ========================
+function restartConversation() {
+	document.querySelector('.usrInput').value = "";
+	send('/restart');
+}
+
+//=====================================	user enter or sends the message =====================
+
+document.querySelector(".usrInput").addEventListener("keyup", handleUserInput);
+document.querySelector(".usrInput").addEventListener("keypress", handleUserInput);
+
+function handleUserInput(e) {
+	const keyCode = e.keyCode || e.which;
+
+	const text = document.querySelector(".usrInput").value;
 	if (keyCode === 13) {
 
-		if (text == "" || $.trim(text) == "") {
+		if (text === "" || text.trim() === "") {
 			e.preventDefault();
 			return false;
 		} else {
-			$("#paginated_cards").remove();
-			$(".suggestions").remove();
-			$(".quickReplies").remove();
-			$(".usrInput").blur();
+			const paginatedCards = document.getElementById("paginated_cards");
+			if (paginatedCards) paginatedCards.remove();
+
+			const suggestions = document.querySelectorAll(".suggestions");
+			suggestions.forEach((suggestion) => suggestion.remove());
+
+			const quickReplies = document.querySelectorAll(".quickReplies");
+			quickReplies.forEach((quickReply) => quickReply.remove());
+
+			document.querySelector(".usrInput").blur();
 			setUserResponse(text);
 			send(text);
 			e.preventDefault();
 			return false;
 		}
 	}
-});
+}
 
-$("#sendButton").on("click", function (e) {
-	var text = $(".usrInput").val();
-	if (text == "" || $.trim(text) == "") {
+document.getElementById("sendButton").addEventListener("click", function (e) {
+	var text = document.querySelector(".usrInput").value;
+	if (text === "" || text.trim() === "") {
 		e.preventDefault();
 		return false;
-	}
-	else {
-		$(".suggestions").remove();
-		$("#paginated_cards").remove();
-		$(".quickReplies").remove();
-		$(".usrInput").blur();
+	} else {
+		var suggestions = document.querySelectorAll(".suggestions");
+		var paginatedCards = document.querySelectorAll("#paginated_cards");
+		var quickReplies = document.querySelectorAll(".quickReplies");
+		suggestions.forEach(function (suggestion) {
+			suggestion.remove();
+		});
+		paginatedCards.forEach(function (card) {
+			card.remove();
+		});
+		quickReplies.forEach(function (reply) {
+			reply.remove();
+		});
+		document.querySelector(".usrInput").blur();
 		setUserResponse(text);
 		send(text);
 		e.preventDefault();
 		return false;
 	}
-})
+});
 
 
-//==================================== Set user response =====================================
 function setUserResponse(message) {
-	var UserResponse = '<img class="userAvatar" src=' + "./static/img/userAvatar.png" + '><p class="userMsg">' + message + ' </p><div class="clearfix"></div>';
-	$(UserResponse).appendTo(".chats").show("slow");
+	var UserResponse = document.createElement("div");
+	UserResponse.className = "msgUser";
+	UserResponse.innerHTML = '<img class="userAvatar" src="./static/img/userAvatar.png"><p class="userMsg">' + message + '</p><div class="clearfix"></div>';
+	document.querySelector(".chats").appendChild(UserResponse).style.display = "block";
 
-	$(".usrInput").val("");
+	document.querySelector(".usrInput").value = "";
 	scrollToBottomOfResults();
 	showBotTyping();
-	$(".suggestions").remove();
+	var suggestions = document.querySelectorAll(".suggestions");
+	suggestions.forEach(function (suggestion) {
+		suggestion.remove();
+	});
 }
 
 //=========== Scroll to the bottom of the chats after new message has been added to chat ======
@@ -105,147 +168,147 @@ function scrollToBottomOfResults() {
 	terminalResultsDiv.scrollTop = terminalResultsDiv.scrollHeight;
 }
 
-//============== send user message to rasa server =============================================
-function send(message) {
-	$.ajax({
-		url: "http://localhost:5005/webhooks/rest/webhook",
-		type: "POST",
-		contentType: "application/json",
-		data: JSON.stringify({ message: message, sender: user_id }),
-		success: function (botResponse, status) {
-			console.log("Response from Rasa: ", botResponse, "\nStatus: ", status);
 
-			// if user wants to restart the chat, clear the existing chat contents
-			if (message.toLowerCase() == '/restart') {
-				$(".chats").html("");
-				return;
-			}
-			setBotResponse(botResponse);
+async function send(message) {
+	try {
+		const response = await fetch("http://localhost:5005/webhooks/rest/webhook", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({ message: message, sender: user_id })
+		});
 
-		},
-		error: function (xhr, textStatus, errorThrown) {
+		const botResponse = await response.json();
+		console.log("Response from Rasa: ", botResponse);
 
-			// if there is no response from rasa server
-			setBotResponse("");
-			console.log("Error from bot end: ", textStatus);
+		// if user wants to restart the chat, clear the existing chat contents
+		if (message.toLowerCase() == '/restart') {
+			document.querySelector(".chats").innerHTML = "";
+			return;
 		}
-	});
+
+		setBotResponse(botResponse);
+
+	} catch (error) {
+		// if there is no response from rasa server
+		setBotResponse("");
+		console.log("Error from bot end: ", error);
+	}
 }
 
 //=================== set bot response in the chats ===========================================
-function setBotResponse(response) {
 
-	//display bot response after 500 milliseconds
+function setBotResponse(response) {
 	setTimeout(function () {
 		hideBotTyping();
 		if (response.length < 1) {
-			//if there is no response from Rasa, send  fallback message to the user
 			var fallbackMsg = "I am facing some issues, please try again later!!!";
-
 			var BotResponse = '<img class="botAvatar" src="./static/img/botAvatar.png"/><p class="botMsg">' + fallbackMsg + '</p><div class="clearfix"></div>';
-
-			$(BotResponse).appendTo(".chats").hide().fadeIn(1000);
+			document.querySelector(".chats").insertAdjacentHTML('beforeend', BotResponse);
 			scrollToBottomOfResults();
-		}
-		else {
-
-			//if we get response from Rasa
-			for (i = 0; i < response.length; i++) {
-
-				//check if the response contains "text"
+		} else {
+			for (var i = 0; i < response.length; i++) {
 				if (response[i].hasOwnProperty("text")) {
 					var BotResponse = '<img class="botAvatar" src="./static/img/botAvatar.png"/><p class="botMsg">' + response[i].text + '</p><div class="clearfix"></div>';
-					$(BotResponse).appendTo(".chats").hide().fadeIn(1000);
+					document.querySelector(".chats").insertAdjacentHTML('beforeend', BotResponse);
 				}
-
-				//check if the response contains "images"
 				if (response[i].hasOwnProperty("image")) {
 					var BotResponse = '<div class="singleCard">' + '<img class="imgcard" src="' + response[i].image + '">' + '</div><div class="clearfix">';
-					$(BotResponse).appendTo(".chats").hide().fadeIn(1000);
+					document.querySelector(".chats").insertAdjacentHTML('beforeend', BotResponse);
 				}
-
-
-				//check if the response contains "buttons" 
 				if (response[i].hasOwnProperty("buttons")) {
 					addSuggestion(response[i].buttons);
 				}
-
-				//check if the response contains "custom" message  
 				if (response[i].hasOwnProperty("custom")) {
-
-					//check of the custom payload type is "quickReplies"
 					if (response[i].custom.payload == "quickReplies") {
 						quickRepliesData = response[i].custom.data;
 						showQuickReplies(quickRepliesData);
 						return;
 					}
-
-					//check of the custom payload type is "location"
 					if (response[i].custom.payload == "location") {
-						$("#userInput").prop('disabled', true);
+						document.getElementById("userInput").disabled = true;
 						getLocation();
 						scrollToBottomOfResults();
 						return;
 					}
-
-					//check of the custom payload type is "cardsCarousel"
 					if (response[i].custom.payload == "cardsCarousel") {
-						restaurantsData = (response[i].custom.data)
+						restaurantsData = (response[i].custom.data);
 						showCardsCarousel(restaurantsData);
 						return;
 					}
 				}
 			}
 			scrollToBottomOfResults();
-
 		}
 	}, 500);
 }
 
-//====================================== Toggle chatbot =======================================
-$("#profile_div").click(function () {
-	$(".profile_div").toggle();
-	$(".widget").toggle();
-});
 
 //====================================== Suggestions ===========================================
-
 function addSuggestion(textToAdd) {
-	setTimeout(function () {
-		var suggestions = textToAdd;
-		var suggLength = textToAdd.length;
-		$(' <div class="singleCard"> <div class="suggestions"><div class="menu"></div></div></diV>').appendTo(".chats").hide().fadeIn(1000);
-		// Loop through suggestions
-		for (i = 0; i < suggLength; i++) {
-			$('<div class="menuChips" data-payload=\'' + (suggestions[i].payload) + '\'>' + suggestions[i].title + "</div>").appendTo(".menu");
-		}
-		scrollToBottomOfResults();
-	}, 1000);
+    setTimeout(function () {
+        var suggestions = textToAdd;
+        var suggLength = textToAdd.length;
+        var newCard = document.createElement('div');
+        newCard.className = 'singleCard';
+        newCard.innerHTML = '<div class="suggestions"><div class="menu"></div></div>';
+        document.querySelector('.chats').appendChild(newCard);
+        
+        // Fading in the newCard (using CSS transitions)
+        newCard.style.display = 'none';
+        newCard.style.opacity = 0;
+        newCard.style.transition = 'opacity 1s';
+        setTimeout(function() {
+            newCard.style.display = 'block';
+            newCard.style.opacity = 1;
+        }, 0); // we can use 0ms timeout to ensure the display is set before opacity transition starts
+
+        // Loop through suggestions
+        for (var i = 0; i < suggLength; i++) {
+            var menuChip = document.createElement('div');
+            menuChip.className = 'menuChips';
+            menuChip.setAttribute('data-payload', suggestions[i].payload);
+            menuChip.innerText = suggestions[i].title;
+            newCard.querySelector('.menu').appendChild(menuChip);
+        }
+
+        scrollToBottomOfResults(); // Make sure this function does not depend on jQuery
+    }, 1000);
 }
 
 // on click of suggestions, get the value and send to rasa
-$(document).on("click", ".menu .menuChips", function () {
-	var text = this.innerText;
-	var payload = this.getAttribute('data-payload');
-	console.log("payload: ", this.getAttribute('data-payload'))
-	setUserResponse(text);
-	send(payload);
+document.addEventListener('click', function(event) {
+    if (event.target.matches('.menu .menuChips')) {
+        var text = event.target.innerText;
+        var payload = event.target.getAttribute('data-payload');
+        console.log("payload: ", payload);
+        setUserResponse(text);
+        send(payload);
 
-	//delete the suggestions
-	$(".suggestions").remove();
-
+        //delete the suggestions
+        var suggestions = document.querySelector('.suggestions');
+        if (suggestions) {
+            suggestions.remove();
+        }
+    }
 });
 
 
-$("#close").click(function () {
-	$(".profile_div").toggle();
-	$(".widget").toggle();
-	scrollToBottomOfResults();
-});
+// When the #restart element is clicked
+var restartButton = document.getElementById('restart');
+if (restartButton) {
+    restartButton.addEventListener('click', function() {
+        restartConversation();
+    });
+}
 
-$("#restart").click(function () {
-	restartConversation()
-});
+function scrollToBottomOfResults() {
+    var chatsDiv = document.querySelector('.chats');
+    if (chatsDiv) {
+        chatsDiv.scrollTop = chatsDiv.scrollHeight;
+    }
+}
 
 //====================================== Cards Carousel =========================================
 
@@ -372,7 +435,7 @@ function getLocation() {
 function getUserPosition(position) {
 	response = "Latitude: " + position.coords.latitude + " Longitude: " + position.coords.longitude;
 	console.log("location: ", response);
-	
+
 	//here you add the intent which you want to trigger 
 	response = '/inform{"latitude":' + position.coords.latitude + ',"longitude":' + position.coords.longitude + '}';
 	$("#userInput").prop('disabled', false);
