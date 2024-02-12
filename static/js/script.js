@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 
 
-// ========================== restart conversation ========================
+//  restart conversation 
 function restartConversation() {
 	document.querySelector('.usrInput').value = "";
 	send('/restart');
@@ -134,10 +134,103 @@ function scrollToBottomOfResults() {
 	var terminalResultsDiv = document.getElementById("chats");
 	terminalResultsDiv.scrollTop = terminalResultsDiv.scrollHeight;
 }
-
-const YOUR_TOKEN = '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'
+const YOUR_TOKEN = '89773db3-7863-460c-ad3c-6abd0db43f1c'
+const OPENAI_TOKEN = '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'
+const API_URL = 'https://vnavarra.nuvolaris.dev/api/my/openai/chat'
+//const API_URL = 'https://openai.nuvolaris.io/api/my/openai/chat'
+//
 
 async function send(message) {
+    console.log("Calling GPT3")
+    var url = API_URL
+    let bearer = 'Bearer ' + YOUR_TOKEN
+
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'Authorization': bearer,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				"input": message
+			})
+		})
+			/*
+			.then(response => {        
+				return response.json()
+			})		   
+			.then(data=>{
+				console.log(data)
+				console.log(typeof data)
+				console.log(Object.keys(data))
+				console.log(data['choices'][0].text)				
+			})
+			*/
+		const botResponse = await response.json()
+		console.log("Response from OpenAi: ", botResponse.output)
+		if (message.toLowerCase() == '/restart') {
+			document.querySelector(".chats").innerHTML = "";
+			return
+		}
+		setBotResponse(botResponse.output)
+	} catch(error) {
+		// if there is no response from rasa server
+		setBotResponse("")
+		console.log("Error from bot end: ", error)
+	}
+}
+
+async function sendOpenAi(message) {
+    console.log("Calling GPT3")
+    var url = "https://api.openai.com/v1/chat/completions";
+    let bearer = 'Bearer ' + YOUR_TOKEN
+
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'Authorization': bearer,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				"model": "gpt-3.5-turbo", 
+				//"prompt": 'generic conversational prompt',	
+				"messages": [{"role": "user", "content": message}],
+				"usage": {
+					"prompt_tokens": 13,
+					"completion_tokens": 20,
+					"total_tokens": 33
+				},
+				
+				"max_tokens": 5,
+				"temperature": 1,
+				"top_p": 1,
+				"n": 1,
+				"stream": false,
+				"logprobs": null,
+				"stop": "\n"
+			})
+		})			
+		const botResponse = await response.json()
+		console.log("Response from OpenAi: ", botResponse.choices[0].message.content)
+		if (message.toLowerCase() == '/restart') {
+			document.querySelector(".chats").innerHTML = "";
+			return
+		}
+		setBotResponse(botResponse.choices[0].message.content)
+	} catch(error) {
+		// if there is no response from rasa server
+		setBotResponse("")
+		console.log("Error from bot end: ", error)
+	}
+
+        
+
+}
+
+
+async function sendOpenAi(message) {
     console.log("Calling GPT3")
     var url = "https://api.openai.com/v1/chat/completions";
     let bearer = 'Bearer ' + YOUR_TOKEN
@@ -190,9 +283,7 @@ async function send(message) {
 		// if there is no response from rasa server
 		setBotResponse("")
 		console.log("Error from bot end: ", error)
-	}
-
-        
+	}        
 
 }
 
