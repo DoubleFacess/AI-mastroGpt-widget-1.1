@@ -12,14 +12,18 @@ const BTN_CLOSE = document.getElementById('close')
 const USER_INPUT = document.querySelector(".usrInput")
 const USER_INPUT_ID = document.getElementById('userInput')
 const CREATE_DIV = document.createElement("div")
-const USER_RESPONSE_PREFIX = '<img class="userAvatar" src="./static/img/userAvatar.png"><p class="userMsg">'
+const USER_IMG = '<img class="userAvatar" src="./static/img/userAvatar.png">'
+const USER_RESPONSE_PREFIX = USER_IMG + '<p class="userMsg">'
 const USER_RESPONSE_SUFFIX = '</p><div class="clearfix"></div>'
 const CHAT_CLASS = document.querySelector(".chats")
 const CHAT_ID = document.getElementById('chats')
 const FALLBACK_MSG = "I am facing some issues, please try again later!!!"
-const BOT_MESSAGE_PREFIX = '<img class="botAvatar" src="./static/img/botAvatar.png"/><p class="botMsg">'
+const BOT_IMAGE = '<img class="botAvatar" src="./static/img/botAvatar.png"/>'
+const BOT_MESSAGE_PREFIX = BOT_IMAGE + '<p class="botMsg">'
 const BOT_MESSAGE_SUFFIX = '</p><div class="clearfix"></div>'
-const BOT_TYPING = '<img class="botAvatar" id="botAvatar" src="./static/img/botAvatar.png"/><div class="botTyping">' + '<div class="bounce1"></div>' + '<div class="bounce2"></div>' + '<div class="bounce3"></div>' + '</div>'
+const BOT_TYPING = BOT_IMAGE + '<div class="botTyping">' + '<div class="bounce1"></div>' + '<div class="bounce2"></div>' + '<div class="bounce3"></div>' + '</div>'
+const SEND_BTN = document.getElementById("sendButton")
+
 
 /* @@ init funcion @@ */
 
@@ -28,6 +32,7 @@ function init() {
 		//showBotTyping()
 		activate_chat()
 		disable_user_input(false)
+		send(false)
 		listen_user_input()
 		get_user_input()
 		return false
@@ -90,8 +95,8 @@ function listen_user_input() {
 }
 
 function get_user_input() {
-	document.getElementById("sendButton").addEventListener("click", function (e) {
-		var text = document.querySelector(".usrInput").value;
+	SEND_BTN.addEventListener("click", function (e) {
+		var text = USER_INPUT.value;
 		if (text === "" || text.trim() === "") {
 			e.preventDefault();
 			return false;
@@ -111,14 +116,11 @@ function restartConversation() {
 }
 
 
-
-
-
 function setUserResponse(message) {
-	let UserResponse = CREATE_DIV
-	UserResponse.className = 'msgUser'
-	UserResponse.innerHTML = USER_RESPONSE_PREFIX + message + USER_RESPONSE_SUFFIX
-	CHAT_CLASS.appendChild(UserResponse).style.display = "block"
+	let res_div = CREATE_DIV
+	res_div.className = 'msgUser'
+	res_div.innerHTML = USER_RESPONSE_PREFIX + message + USER_RESPONSE_SUFFIX
+	CHAT_CLASS.appendChild(res_div).style.display = "block"
 	USER_INPUT.value = ""
 	scrollToBottomOfResults()
 	showBotTyping()
@@ -137,11 +139,11 @@ function scrollToBottomOfResults() {
 
 //
 
-async function send(message, arg) {
-	console.log("Calling GPT3")
+async function send(message) {
+	console.log("Fetching api")
 	var url = API_URL
 	let bearer = 'Bearer ' + YOUR_TOKEN
-	if(arg) {
+	if(!message) {
 		message = ''		
 	}
 	try {
