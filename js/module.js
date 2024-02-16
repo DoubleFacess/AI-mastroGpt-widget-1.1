@@ -37,10 +37,10 @@ var myApp = (function () {
 }())
 
 //dump.next('debug: creating namespaces');
-var userObj = myApp.namespace(userObj)
+//var userObj = myApp.namespace(userObj)
 var main = myApp.namespace(main)
-var test_app = myApp.namespace(test_app)
-var listeners = myApp.namespace(listeners)
+var dom = myApp.namespace(dom)
+//var listeners = myApp.namespace(listeners)
 
 
 
