@@ -14,7 +14,10 @@ main = main.createModule(function(){
 		//dom.appTest()
 		dom.activateChat()
 		dom.closeButton()
-		dom.userInput()
+		dom.disableUserInput(false)
+		dom.sendRequest(false)
+		dom.listenUserInput()
+		dom.getUserInput()
 	}
 
 	let _functionTest = function() {
